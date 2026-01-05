@@ -1,0 +1,152 @@
+CW 
+
+let
+    Source0 = Excel.CurrentWorkbook(){[Name="Table1"]}[Content],
+    matricula = List.First(Source0[MATRICULA]),
+    pasta = List.First(Source0[PASTA]),
+    Source = Csv.Document(File.Contents("C:\Users\" & matricula & "\TIM\Consolidation, Reporting & KPIs - " & pasta & "\Data Management\Projetos\Acomp. de Contratos\\ARIBA\CSVs_Unificados\Contrato_Legal_Compras.csv"),[Delimiter=",", Columns=11, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"Removed Columns" = Table.RemoveColumns(#"Promoted Headers",{"Contrato - Data de efetivação", "Contrato - Data de vencimento", "Status do contrato", "count()"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Removed Columns",{{"sum(Valor do contrato)", type number}}),
+    #"Split Column by Delimiter" = Table.SplitColumn(#"Changed Type", "NomeArquivo", Splitter.SplitTextByDelimiter("_", QuoteStyle.Csv), {"NomeArquivo.1", "NomeArquivo.2", "NomeArquivo.3", "NomeArquivo.4", "NomeArquivo.5"}),
+    #"Removed Columns1" = Table.RemoveColumns(#"Split Column by Delimiter",{"NomeArquivo.2", "NomeArquivo.3", "NomeArquivo.4", "NomeArquivo.5"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Removed Columns1",{{"NomeArquivo.1", "DataReferencia"}}),
+    #"Replaced Value" = Table.ReplaceValue(#"Renamed Columns","'","",Replacer.ReplaceText,{"CNPJ/CPF do Fornecedor"}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Replaced Value",".","",Replacer.ReplaceText,{"CNPJ/CPF do Fornecedor"}),
+    #"Replaced Value2" = Table.ReplaceValue(#"Replaced Value1","-","",Replacer.ReplaceText,{"CNPJ/CPF do Fornecedor"}),
+    #"Replaced Value3" = Table.ReplaceValue(#"Replaced Value2","/","",Replacer.ReplaceText,{"CNPJ/CPF do Fornecedor"}),
+    #"Renamed Columns1" = Table.RenameColumns(#"Replaced Value3",{{"Baseado no projeto... - Código do projeto", "BASEADO_NO_PROJ"}, {"Código do projeto", "CW"}, {"CNPJ/CPF do Fornecedor", "CNPJ_CPF_FORNEC"}, {"Fornecedor - Fornecedor global", "FORNECEDOR"}, {"sum(Valor do contrato)", "VALOR_CONTRATO"}, {"DataReferencia", "DATA_REFERENCIA"}, {"Contrato-raiz - Código do projeto", "CW_RAIZ"}}),
+    #"Replaced Value4" = Table.ReplaceValue(#"Renamed Columns1","Irrestrito","",Replacer.ReplaceText,{"BASEADO_NO_PROJ"}),
+    #"Added Custom" = Table.AddColumn(#"Replaced Value4", "SR", each if Text.Start([BASEADO_NO_PROJ],2) = "SR" then [BASEADO_NO_PROJ] else ""),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "WS", each if Text.Start([BASEADO_NO_PROJ],2) = "WS" then [BASEADO_NO_PROJ] else ""),
+    #"Sorted Rows" = Table.Sort(#"Added Custom1",{{"CW", Order.Ascending}}),
+    #"Filtered Rows" = Table.SelectRows(#"Sorted Rows", each [VALOR_CONTRATO] > 0),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Filtered Rows",{{"DATA_REFERENCIA", type date}}),
+    #"Removed Columns2" = Table.RemoveColumns(#"Changed Type1",{"BASEADO_NO_PROJ"}),
+    #"Filtered Rows1" = Table.SelectRows(#"Removed Columns2", let latest = List.Max(#"Removed Columns2"[DATA_REFERENCIA]) in each [DATA_REFERENCIA] = latest),
+    #"Reordered Columns" = Table.ReorderColumns(#"Filtered Rows1",{"CW", "CW_RAIZ", "CNPJ_CPF_FORNEC", "FORNECEDOR", "VALOR_CONTRATO", "DATA_REFERENCIA", "SR", "WS"}),
+    #"Replaced Value5" = Table.ReplaceValue(#"Reordered Columns","Irrestrito","",Replacer.ReplaceText,{"CW_RAIZ"})
+in
+    #"Replaced Value5"
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+WS
+
+let
+    Source0 = Excel.CurrentWorkbook(){[Name="Table2"]}[Content],
+    matricula = List.First(Source0[MATRICULA]),
+    pasta = List.First(Source0[PASTA]),
+    caminho_arquivo = Csv.Document(File.Contents("C:\Users\" & matricula & "\TIM\Consolidation, Reporting & KPIs - " & pasta & "\Data Management\Projetos\Acomp. de Contratos\ARIBA\CSVs_Unificados\Projeto_de_Sourcing.csv"),[Delimiter=",", Columns=14, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(caminho_arquivo, [PromoteAllScalars=true]),
+    #"Replaced Value" = Table.ReplaceValue(#"Promoted Headers","Irrestrito","",Replacer.ReplaceText,{"[PSO]Data inicial (Data)", "[PSO]Data final (Data)"}),
+    #"Removed Columns" = Table.RemoveColumns(#"Replaced Value",{"[PSO] Area do comprador"}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Removed Columns","Irrestrito","",Replacer.ReplaceText,{"[PSO]Baseado no projeto... (Código do projeto)"}),
+    #"Replaced Value2" = Table.ReplaceValue(#"Replaced Value1","Irrestrito","",Replacer.ReplaceText,{"[PSO]Projeto raiz (Código do projeto)", "[New Formulário de Aprovação]Fornecedor Selecionado (Nome do fornecedor (L1))"}),
+    #"Removed Columns1" = Table.RemoveColumns(#"Replaced Value2",{"count(SourcingProject)"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Removed Columns1",{{"sum(Valor Valor Negociado Ano 1)", "VALOR_ANO_1"}, {"sum(Valor Valor Negociado Ano 2)", "VALOR_ANO_2"}, {"sum(Valor Valor Negociado Demais Anos)", "VALOR_DEMAIS_ANOS"}, {"sum(Valor Valor Negociado Total)", "VALOR_TOTAL"}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Renamed Columns",{{"VALOR_TOTAL", type number}, {"VALOR_DEMAIS_ANOS", type number}, {"VALOR_ANO_2", type number}, {"VALOR_ANO_1", type number}}),
+    #"Split Column by Delimiter" = Table.SplitColumn(#"Changed Type", "NomeArquivo", Splitter.SplitTextByDelimiter("_", QuoteStyle.Csv), {"NomeArquivo.1", "NomeArquivo.2", "NomeArquivo.3", "NomeArquivo.4", "NomeArquivo.5"}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Split Column by Delimiter",{{"[PSO]Projeto (Código do projeto)", type text}, {"[PSO] Unidade organizacional do comprador", type text}, {"NomeArquivo.1", Int64.Type}, {"NomeArquivo.2", Int64.Type}, {"NomeArquivo.3", Int64.Type}, {"NomeArquivo.4", type date}, {"NomeArquivo.5", type text}}),
+    #"Removed Columns2" = Table.RemoveColumns(#"Changed Type1",{"NomeArquivo.2", "NomeArquivo.3", "NomeArquivo.4", "NomeArquivo.5"}),
+    #"Renamed Columns1" = Table.RenameColumns(#"Removed Columns2",{{"NomeArquivo.1", "DATA_REFERENCIA"}, {"[New Formulário de Aprovação]Fornecedor Selecionado (Nome do fornecedor (L1))", "NOME_FORNECEDOR"}, {"[PSO] Unidade organizacional do comprador", "UO_COMPRADOR"}, {"[PSO]Data inicial (Data)", "DATA_INI"}, {"[PSO]Data final (Data)", "DATA_FIM"}, {"[PSO]Projeto (Código do projeto)", "WS"}, {"[PSO]Baseado no projeto... (Código do projeto)", "BASEADO_NO_PROJ"}, {"[PSO]Projeto raiz (Código do projeto)", "PROJ_RAIZ"}}),
+    #"Added Custom" = Table.AddColumn(#"Renamed Columns1", "SR", each if [BASEADO_NO_PROJ] = [PROJ_RAIZ] then [PROJ_RAIZ] else if [BASEADO_NO_PROJ] = "" and [PROJ_RAIZ] <> "" then [PROJ_RAIZ] else if [PROJ_RAIZ] = "" and [BASEADO_NO_PROJ] <> "" then [BASEADO_NO_PROJ] else if [BASEADO_NO_PROJ] <> [PROJ_RAIZ] and [PROJ_RAIZ] <> "" and [BASEADO_NO_PROJ] <> "" then [PROJ_RAIZ] else ""),
+    #"Reordered Columns" = Table.ReorderColumns(#"Added Custom",{"WS", "SR", "DATA_INI", "DATA_FIM", "UO_COMPRADOR", "BASEADO_NO_PROJ", "PROJ_RAIZ", "NOME_FORNECEDOR", "VALOR_ANO_1", "VALOR_ANO_2", "VALOR_DEMAIS_ANOS", "VALOR_TOTAL", "DATA_REFERENCIA"}),
+    #"Changed Type2" = Table.TransformColumnTypes(#"Reordered Columns",{{"DATA_FIM", type date}, {"DATA_INI", type date}}),
+    #"Removed Columns3" = Table.RemoveColumns(#"Changed Type2",{"BASEADO_NO_PROJ", "PROJ_RAIZ"}),
+    #"Sorted Rows" = Table.Sort(#"Removed Columns3",{{"WS", Order.Ascending}}),
+    #"Changed Type3" = Table.TransformColumnTypes(#"Sorted Rows",{{"DATA_REFERENCIA", type text}}),
+    #"Changed Type4" = Table.TransformColumnTypes(#"Changed Type3",{{"DATA_REFERENCIA", type date}}),
+    #"Filtered Rows" = Table.SelectRows(#"Changed Type4", let latest = List.Max(#"Changed Type4"[DATA_REFERENCIA]) in each [DATA_REFERENCIA] = latest),
+    #"Removed Columns4" = Table.RemoveColumns(#"Filtered Rows",{"DATA_INI", "DATA_FIM", "UO_COMPRADOR"})
+in
+    #"Removed Columns4"
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+SR
+
+let
+    Source0 = Excel.CurrentWorkbook(){[Name="Table2"]}[Content],
+    matricula = List.First(Source0[MATRICULA]),
+    pasta = List.First(Source0[PASTA]),
+    caminho_arquivo = Csv.Document(File.Contents("C:\Users\" & matricula & "\TIM\Consolidation, Reporting & KPIs - " & pasta & "\Data Management\Projetos\Acomp. de Contratos\ARIBA\CSVs_Unificados\Solicitação_Sourcing.csv"),[Delimiter=",", Columns=27, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(caminho_arquivo, [PromoteAllScalars=true]),
+    #"Removed Columns" = Table.RemoveColumns(#"Promoted Headers",{"[SPRO]Mercadoria (Mercadoria)"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"[SPRO]Mercadoria (Código da mercadoria)", "GRUPO_MERCADORIA"}}),
+    #"Removed Columns1" = Table.RemoveColumns(#"Renamed Columns",{"[SPRO] Area do requisitante"}),
+    #"Renamed Columns1" = Table.RenameColumns(#"Removed Columns1",{{"[SPRO] Diretoria do requisitante", "DIRETORIA"}, {"[SPRO] Estado", "ESTADO_SR"}}),
+    #"Removed Columns2" = Table.RemoveColumns(#"Renamed Columns1",{"[SPRO] Status do Processo"}),
+    #"Renamed Columns2" = Table.RenameColumns(#"Removed Columns2",{{"ESTADO_SR", "STATUS"}, {"[SPRO]Data inicial (Data)", "DT_INI"}, {"[SPRO]Data final (Data)", "DT_FIM"}}),
+    #"Replaced Value" = Table.ReplaceValue(#"Renamed Columns2","Irrestrito","",Replacer.ReplaceText,{"DT_INI", "DT_FIM"}),
+    #"Renamed Columns3" = Table.RenameColumns(#"Replaced Value",{{"[SPRO] Unidade organizacional do requisitante", "UO_REQUISITANTE"}, {"[SPRO] Moeda", "MOEDA"}}),
+    #"Removed Columns3" = Table.RemoveColumns(#"Renamed Columns3",{"[SPRO] Tipo de Contratacao"}),
+    #"Renamed Columns4" = Table.RenameColumns(#"Removed Columns3",{{"[Formulário de Sourcing (SR)] Conta Contábil", "CONTA_CONTABIL"}}),
+    #"Removed Columns4" = Table.RemoveColumns(#"Renamed Columns4",{"[Formulário de Sourcing (SR)] Ano de Referencia", "count(SourcingRequest)"}),
+    #"Renamed Columns5" = Table.RenameColumns(#"Removed Columns4",{{"sum(Valor Orçamento Total Ano 1)", "VALOR_ANO_1"}, {"sum(Valor Orçamento Total Ano 2)", "VALOR_ANO_2"}, {"sum(Valor Orçamento Total Demais Anos)", "VALOR_DEMAIS_ANOS"}, {"sum(Valor Orçamento Total)", "VALOT_TOTAL"}, {"sum(OPEX (%))", "PERCENTUAL_OPEX"}}),
+    #"Removed Columns5" = Table.RemoveColumns(#"Renamed Columns5",{"sum(Gastos da linha de base)"}),
+    #"Renamed Columns6" = Table.RenameColumns(#"Removed Columns5",{{"[SPRO] Código do projeto", "SR"}, {"[SPRO]Proprietário (Código do usuário)", "MATRICULA_PROPRIETARIO"}, {"[SPRO]Proprietário (Usuário)", "NOME_PROPRIETARIO"}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Renamed Columns6",{{"VALOT_TOTAL", type number}, {"VALOR_DEMAIS_ANOS", type number}, {"VALOR_ANO_2", type number}, {"VALOR_ANO_1", type number}, {"PERCENTUAL_OPEX", Int64.Type}}),
+    #"Divided Column" = Table.TransformColumns(#"Changed Type", {{"PERCENTUAL_OPEX", each _ / 10000000000, type number}}),
+    #"Split Column by Delimiter" = Table.SplitColumn(#"Divided Column", "NomeArquivo", Splitter.SplitTextByDelimiter("_", QuoteStyle.Csv), {"NomeArquivo.1", "NomeArquivo.2", "NomeArquivo.3", "NomeArquivo.4", "NomeArquivo.5"}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Split Column by Delimiter",{{"SR", type text}, {"MATRICULA_PROPRIETARIO", type text}, {"NOME_PROPRIETARIO", type text}, {"[SPRO] Tipo de Solicitacao", type text}, {"STATUS", type text}, {"GRUPO_MERCADORIA", type text}, {"DIRETORIA", type text}, {"UO_REQUISITANTE", type text}, {"MOEDA", type text}, {"CONTA_CONTABIL", type text}, {"NomeArquivo.1", Int64.Type}, {"NomeArquivo.2", Int64.Type}, {"NomeArquivo.3", Int64.Type}, {"NomeArquivo.4", type time}, {"NomeArquivo.5", type text}}),
+    #"Removed Columns6" = Table.RemoveColumns(#"Changed Type1",{"NomeArquivo.2", "NomeArquivo.3", "NomeArquivo.4", "NomeArquivo.5"}),
+    #"Renamed Columns7" = Table.RenameColumns(#"Removed Columns6",{{"NomeArquivo.1", "DATA_REFERENCIA"}}),
+    #"Renamed Columns8" = Table.RenameColumns(#"Renamed Columns7",{{"[SPRO] Tipo de Solicitacao", "TIPO_SOLICITACAO"}}),
+    #"Changed Type2" = Table.TransformColumnTypes(#"Renamed Columns8",{{"DT_INI", type date}, {"DT_FIM", type date}}),
+    #"Removed Columns7" = Table.RemoveColumns(#"Changed Type2",{"DIRETORIA"}),
+    #"Sorted Rows" = Table.Sort(#"Removed Columns7",{{"SR", Order.Ascending}}),
+    #"Changed Type3" = Table.TransformColumnTypes(#"Sorted Rows",{{"DATA_REFERENCIA", type text}}),
+    #"Changed Type4" = Table.TransformColumnTypes(#"Changed Type3",{{"DATA_REFERENCIA", type date}}),
+    #"Filtered Rows" = Table.SelectRows(#"Changed Type4", each ([STATUS] <> "Cancelado")),
+    #"Merged Queries" = Table.NestedJoin(#"Filtered Rows", {"CONTA_CONTABIL"}, CONTAS_THIRD_PARTIES, {"CONTA_CONTABIL"}, "CONTAS_THIRD_PARTIES", JoinKind.LeftOuter),
+    #"Expanded CONTAS_THIRD_PARTIES" = Table.ExpandTableColumn(#"Merged Queries", "CONTAS_THIRD_PARTIES", {"FLAG"}, {"FLAG"}),
+    #"Filtered Rows1" = Table.SelectRows(#"Expanded CONTAS_THIRD_PARTIES", each [FLAG] = 1),
+    #"Merged Queries1" = Table.NestedJoin(#"Filtered Rows1", {"UO_REQUISITANTE"}, DE_PARA_UO_CDC, {"CHAVE"}, "DE_PARA_UO_CDC", JoinKind.LeftOuter),
+    #"Expanded DE_PARA_UO_CDC" = Table.ExpandTableColumn(#"Merged Queries1", "DE_PARA_UO_CDC", {"CDC"}, {"CDC"}),
+    #"Removed Columns8" = Table.RemoveColumns(#"Expanded DE_PARA_UO_CDC",{"FLAG"}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Removed Columns8",{"SR", "MATRICULA_PROPRIETARIO", "NOME_PROPRIETARIO", "TIPO_SOLICITACAO", "DT_INI", "DT_FIM", "STATUS", "GRUPO_MERCADORIA", "UO_REQUISITANTE", "MOEDA", "CONTA_CONTABIL", "CDC", "PERCENTUAL_OPEX", "VALOR_ANO_1", "VALOR_ANO_2", "VALOR_DEMAIS_ANOS", "VALOT_TOTAL", "DATA_REFERENCIA"}),
+    #"Added Custom" = Table.AddColumn(#"Reordered Columns", "VALOR_ORCADO_OPEX", each [VALOT_TOTAL] * ([PERCENTUAL_OPEX]/100)),
+    #"Changed Type5" = Table.TransformColumnTypes(#"Added Custom",{{"VALOR_ORCADO_OPEX", type number}}),
+    #"Removed Columns9" = Table.RemoveColumns(#"Changed Type5",{"UO_REQUISITANTE"}),
+    #"Renamed Columns9" = Table.RenameColumns(#"Removed Columns9",{{"[SPRO]Projeto (Nome do projeto)", "NOME_PROJETO"}, {"[SPRO] Descrição", "DESCRICAO_PROJETO"}})
+in
+    #"Renamed Columns9"
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>
+IMPORT
+
+let
+    Source = SR,
+    #"Merged Queries" = Table.NestedJoin(Source, {"SR"}, WS, {"SR"}, "WS", JoinKind.LeftOuter),
+    #"Expanded WS" = Table.ExpandTableColumn(#"Merged Queries", "WS", {"WS", "NOME_FORNECEDOR", "VALOR_ANO_1", "VALOR_ANO_2", "VALOR_DEMAIS_ANOS", "VALOR_TOTAL"}, {"WS.WS", "WS.NOME_FORNECEDOR", "WS.VALOR_ANO_1", "WS.VALOR_ANO_2", "WS.VALOR_DEMAIS_ANOS", "WS.VALOR_TOTAL"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Expanded WS",{{"WS.WS", "WS.CODIGO"}}),
+    #"Merged Queries1" = Table.NestedJoin(#"Renamed Columns", {"WS.CODIGO"}, CW, {"WS"}, "CW", JoinKind.LeftOuter),
+    #"Expanded CW" = Table.ExpandTableColumn(#"Merged Queries1", "CW", {"CW", "CNPJ_CPF_FORNEC", "FORNECEDOR", "VALOR_CONTRATO", "CW_RAIZ"}, {"CW.CW", "CW.CNPJ_CPF_FORNEC", "CW.FORNECEDOR", "CW.VALOR_CONTRATO", "CW.CW_RAIZ"}),
+    #"Renamed Columns1" = Table.RenameColumns(#"Expanded CW",{{"CW.CW", "CW.CODIGO"}}),
+    #"Merged Queries2" = Table.NestedJoin(#"Renamed Columns1", {"SR"}, CW, {"SR"}, "CW", JoinKind.LeftOuter),
+    #"Expanded CW1" = Table.ExpandTableColumn(#"Merged Queries2", "CW", {"CW", "CNPJ_CPF_FORNEC", "FORNECEDOR", "VALOR_CONTRATO", "CW_RAIZ"}, {"CW.CW", "CW.CNPJ_CPF_FORNEC.1", "CW.FORNECEDOR.1", "CW.VALOR_CONTRATO.1", "CW.CW_RAIZ_1"}),
+    #"Added Custom" = Table.AddColumn(#"Expanded CW1", "CW.CODIGO_new", each if [CW.CODIGO] = null then [CW.CW] else [CW.CODIGO]),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "CW.CNPJ_CPF_FORNEC_new", each if [CW.CNPJ_CPF_FORNEC] = null then [CW.CNPJ_CPF_FORNEC.1] else [CW.CNPJ_CPF_FORNEC]),
+    #"Added Custom2" = Table.AddColumn(#"Added Custom1", "CW.FORNECEDOR_new", each if [CW.FORNECEDOR] = null then [CW.FORNECEDOR.1] else [CW.FORNECEDOR]),
+    #"Added Custom3" = Table.AddColumn(#"Added Custom2", "CW.VALOR_CONTRATO_new", each if [CW.VALOR_CONTRATO] = null then [CW.VALOR_CONTRATO.1] else [CW.VALOR_CONTRATO]),
+    #"Removed Columns" = Table.RemoveColumns(#"Added Custom3",{"CW.CODIGO", "CW.CNPJ_CPF_FORNEC", "CW.FORNECEDOR", "CW.VALOR_CONTRATO", "CW.CW", "CW.CNPJ_CPF_FORNEC.1", "CW.FORNECEDOR.1", "CW.VALOR_CONTRATO.1", "CW.CW_RAIZ_1"}),
+    #"Renamed Columns2" = Table.RenameColumns(#"Removed Columns",{{"CW.CODIGO_new", "CW.CODIGO"}, {"CW.CNPJ_CPF_FORNEC_new", "CW.CNPJ_CPF_FORNEC"}, {"CW.FORNECEDOR_new", "CW.FORNECEDOR"}, {"CW.VALOR_CONTRATO_new", "CW.VALOR_CONTRATO"}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Renamed Columns2",{{"DT_INI", type text}, {"DT_FIM", type text}, {"DATA_REFERENCIA", type text}}),
+    #"Renamed Columns3" = Table.RenameColumns(#"Changed Type",{{"WS.CODIGO", "WS_CODIGO"}, {"WS.NOME_FORNECEDOR", "WS_NOME_FORNECEDOR"}, {"WS.VALOR_ANO_1", "WS_VALOR_ANO_1"}, {"WS.VALOR_ANO_2", "WS_VALOR_ANO_2"}, {"WS.VALOR_DEMAIS_ANOS", "WS_VALOR_DEMAIS_ANOS"}, {"WS.VALOR_TOTAL", "WS_VALOR_TOTAL"}, {"CW.CODIGO", "CW_CODIGO"}, {"CW.CNPJ_CPF_FORNEC", "CW_CNPJ_CPF_FORNEC"}, {"CW.FORNECEDOR", "CW_FORNECEDOR"}, {"CW.VALOR_CONTRATO", "CW_VALOR_CONTRATO"}}),
+    #"Added Custom4" = Table.AddColumn(#"Renamed Columns3", "FORNECEDOR_Final", each if [CW_FORNECEDOR] = null then [WS_NOME_FORNECEDOR] else [CW_FORNECEDOR]),
+    #"Removed Columns1" = Table.RemoveColumns(#"Added Custom4",{"WS_NOME_FORNECEDOR", "CW_FORNECEDOR"}),
+    #"Renamed Columns4" = Table.RenameColumns(#"Removed Columns1",{{"FORNECEDOR_Final", "FORNECEDOR"}}),
+    #"Removed Duplicates" = Table.Distinct(#"Renamed Columns4"),
+    #"Merged Queries3" = Table.NestedJoin(#"Removed Duplicates", {"CDC"}, IMPORT_DBS_CDC, {"CDC"}, "IMPORT_DBS_CDC", JoinKind.LeftOuter),
+    #"Expanded IMPORT_DBS_CDC" = Table.ExpandTableColumn(#"Merged Queries3", "IMPORT_DBS_CDC", {"DN1", "DN2"}, {"DN1", "DN2"}),
+    #"Added Index" = Table.AddIndexColumn(#"Expanded IMPORT_DBS_CDC", "Index", 1, 1, Int64.Type),
+    #"Reordered Columns" = Table.ReorderColumns(#"Added Index",{"Index", "SR", "MATRICULA_PROPRIETARIO", "NOME_PROPRIETARIO", "TIPO_SOLICITACAO", "DT_INI", "DT_FIM", "STATUS", "GRUPO_MERCADORIA", "MOEDA", "CONTA_CONTABIL", "CDC", "PERCENTUAL_OPEX", "VALOR_ORCADO", "VALOR_ORCADO_OPEX", "DATA_REFERENCIA", "COUNT_IF", "WS_CODIGO", "WS_VALOR_ANO_1", "WS_VALOR_ANO_2", "WS_VALOR_DEMAIS_ANOS", "WS_VALOR_TOTAL", "CW_CODIGO", "CW_VALOR_CONTRATO", "FORNECEDOR", "DN1", "DN2"}),
+    #"Renamed Columns5" = Table.RenameColumns(#"Reordered Columns",{{"NOME_PROJETO", "SR_NOME_PROJETO"}}),
+    #"Reordered Columns1" = Table.ReorderColumns(#"Renamed Columns5",{"Index", "SR", "SR_NOME_PROJETO", "MATRICULA_PROPRIETARIO", "NOME_PROPRIETARIO", "TIPO_SOLICITACAO", "DT_INI", "DT_FIM", "STATUS", "DESCRICAO_PROJETO", "GRUPO_MERCADORIA", "MOEDA", "CONTA_CONTABIL", "CDC", "PERCENTUAL_OPEX", "VALOR_ORCADO", "VALOR_ORCADO_OPEX", "DATA_REFERENCIA", "COUNT_IF", "WS_CODIGO", "WS_VALOR_ANO_1", "WS_VALOR_ANO_2", "WS_VALOR_DEMAIS_ANOS", "WS_VALOR_TOTAL", "CW_CODIGO", "CW_VALOR_CONTRATO", "FORNECEDOR", "DN1", "DN2"}),
+    #"Renamed Columns6" = Table.RenameColumns(#"Reordered Columns1",{{"DESCRICAO_PROJETO", "SR_DESCRICAO_PROJETO"}}),
+    #"Reordered Columns2" = Table.ReorderColumns(#"Renamed Columns6",{"Index", "SR", "SR_NOME_PROJETO", "MATRICULA_PROPRIETARIO", "NOME_PROPRIETARIO", "TIPO_SOLICITACAO", "DT_INI", "DT_FIM", "STATUS", "SR_DESCRICAO_PROJETO", "GRUPO_MERCADORIA", "MOEDA", "CONTA_CONTABIL", "CDC", "PERCENTUAL_OPEX", "VALOR_ORCADO", "VALOR_ORCADO_OPEX", "DATA_REFERENCIA", "COUNT_IF", "WS_CODIGO", "WS_VALOR_ANO_1", "WS_VALOR_ANO_2", "WS_VALOR_DEMAIS_ANOS", "WS_VALOR_TOTAL", "CW_CODIGO", "CW.CW_RAIZ", "CW_VALOR_CONTRATO", "CW_CNPJ_CPF_FORNEC", "FORNECEDOR", "DN1", "DN2"}),
+    #"Renamed Columns7" = Table.RenameColumns(#"Reordered Columns2",{{"CW.CW_RAIZ", "CW_RAIZ"}})
+in
+    #"Renamed Columns7"
